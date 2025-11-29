@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Merged — Sustainable Travel Route Optimiser (Full)</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+  <style>
+    :root{
+      --green:#0f9d58;
+      --muted:#6b7280;
+      --card:#ffffff;
+      --bg:#f3f4f6;
+      --glass: rgba(255,255,255,0.85);
+      --danger-dark:#8b0000;
+      --danger-black:#0b0b0b;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:#111;}
+    .container{max-width:1100px;margin:0 auto;padding:24px 24px 40px;} /* slightly down from header */
+    /* NAV */
+    nav{display:flex;align-items:center;justify-content:space-between;background:var(--card);padding:12px 16px;border-radius:10px;box-shadow:0 6px 18px rgba(15,23,42,0.06);}
+    nav h1{margin:0;font-size:18px;color:var(--green);font-weight:700;}
+    .nav-links{display:flex;gap:8px;align-items:center;}
+    .nav-links .btn{background:transparent;border:0;padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer;}
+    .nav-links .btn:hover{background:#f1f5f9;}
+    .mini-mode{padding:6px 10px;border-radius:8px;font-size:13px;border:1px solid #e6e9ee;background:#fff;cursor:pointer;}
+    .mini-mode.active{background:#e6ffef;border-color:var(--green);color:var(--green);font-weight:700;}
+    .cta{background:var(--green);color:#fff;padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700;}
+    /* HERO */
+    .hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:36px 12px;margin:18px 0;border-radius:14px;background:linear-gradient(180deg,rgba(15,157,88,0.06),transparent);box-shadow:0 4px 20px rgba(15,23,42,0.03);} 
+    .hero h2{font-size:24px;margin:0 0 8px;color:#065f46;}
+    .hero p{margin:0 0 12px;color:var(--muted);max-width:800px;}
+    /* FEATURES */
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:18px 0;}
+    .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,0.04);text-align:center;}
+    .icon{width:48px;height:48px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:linear-gradient(135deg,#ecfccb,#bbf7d0);font-weight:800;color:#14532d;}
+    /* MAP + ROUTES */
+    .main{display:grid;grid-template-columns:1fr 420px;gap:18px;margin-bottom:28px;}
+    #map{background:linear-gradient(180deg,#dff6e9,#ffffff);border-radius:12px;min-height:420px;border:2px dashed rgba(15,23,42,0.04);overflow:hidden}
+    .sidebar{position:relative;}
+    .route-list{display:flex;flex-direction:column;gap:12px;margin-top:10px;}
+    .route-card{background:var(--card);padding:12px;border-radius:12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 6px 16px rgba(15,23,42,0.04);}    
+    .route-top{display:flex;justify-content:space-between;align-items:center;}
+    .meta{color:var(--muted);font-size:13px;}
+    .co2{font-weight:800;color:#065f46;}
+    .select{display:flex;gap:8px;margin-top:6px;}
+    .small{font-size:13px;color:var(--muted);}
+    /* transport mini area */
+    .mode-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
+    /* recommendation box */
+    .recommend{background:#fffbe6;border:1px solid #fde68a;padding:12px;border-radius:10px;margin-bottom:8px}
+    .recommend h4{margin:0 0 6px 0}
+    /* saved/planner panel */
+    .hidden{display:none}
+    /* FOOTER CTA */
+    footer{background:var(--green);color:#fff;padding:18px;border-radius:12px;text-align:center;margin-top:18px;}
+    /* responsive */
+    @media (max-width:980px){
+      .grid{grid-template-columns:1fr;}
+      .main{grid-template-columns:1fr;}
+      .container{padding:12px;}
+      #map{min-height:300px}
+    }
+
+    /* Fossil theme (red & black) */
+    body.fossil-theme{background:linear-gradient(180deg,var(--danger-black),#2b0000);color:#fff}
+    body.fossil-theme nav{background:var(--danger-black);color:#fff;border:1px solid var(--danger-dark)}
+    body.fossil-theme nav h1{color:var(--danger-dark)}
+    body.fossil-theme .card{background:#111;border-color:rgba(255,255,255,0.05);color:#fff}
+    body.fossil-theme .icon{background:linear-gradient(135deg,#fee2e2,#fecaca);color:#7f1d1d}
+    body.fossil-theme .mini-mode{background:#1a1a1a;color:#fff;border-color:#2b2b2b}
+    body.fossil-theme .mini-mode.active{background:var(--danger-dark);border-color:#fff;color:#fff}
+    body.fossil-theme .route-card{background:#111;color:#fff;border:1px solid rgba(255,255,255,0.04)}
+    body.fossil-theme .recommend{background:#2b0000;color:#fff;border-color:#651111}
+    body.fossil-theme .cta{background:var(--danger-dark)}
+    body.fossil-theme footer{background:var(--danger-dark)}
+    .warning-banner{background:linear-gradient(90deg,var(--danger-dark),#7b0000);color:#fff;padding:8px;border-radius:8px;margin-bottom:8px;font-weight:700;text-align:center}
+    /* small helpers */
+    .muted{color:var(--muted);font-size:13px}
+    .tabs{display:flex;gap:8px;align-items:center}
+    .tab-btn{background:transparent;border:0;padding:6px 8px;border-radius:8px;cursor:pointer;font-weight:600}
+    .tab-btn.active{background:#ecfdf5;border:1px solid #bbf7d0}
+
+    /* Chat placeholder button */
+    .chat-placeholder{position:fixed;right:18px;bottom:18px;background:var(--green);color:#fff;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;z-index:9999}
+    .chat-modal{position:fixed;right:18px;bottom:86px;width:320px;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.2);padding:12px;z-index:9999}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Navigation -->
+    <nav>
+      <h1>Team 4 — Sustainable Travel Route Optimiser</h1>
+      <div class="nav-links" role="navigation" aria-label="Primary">
+        <div class="tabs">
+          <button class="tab-btn" onclick="document.location='trial.html'">Home</button>
+          <button class="tab-btn" onclick="showTab('features')">About</button>
+          <button class="tab-btn active" id="routesTabBtn" onclick="showTab('routes')">Routes</button>
+          <button class="tab-btn" id="savedTabBtn" onclick="showTab('saved')">Saved</button>
+          <button class="tab-btn" id="plannerTabBtn" onclick="showTab('planner')">Planner</button>
+        </div>
+        <button class="cta" onclick="launchTool()">Launch Tool</button>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section id="home" class="hero" aria-labelledby="hero-heading" style="margin-top:12px;">
+      <h2 id="hero-heading">Travel Smarter. Travel Greener.</h2>
+      <p>Discover the most eco-friendly routes by combining walking, cycling, public transport, and electric vehicle options. Compare travel time, cost, and estimated CO₂ emissions to make sustainable choices.</p>
+      <div style="display:flex;gap:10px;">
+        <button class="cta" onclick="showTab('routes')">Start Optimising</button>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="grid" aria-label="Key features">
+      <div class="card">
+        <div class="icon">🗺️</div>
+        <h3>Multi-Modal Routing</h3>
+        <p class="small">Combine walking, cycling, public transport, and EV legs into one route.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🌱</div>
+        <h3>CO₂ Comparison</h3>
+        <p class="small">Estimated emissions per route so you can pick the greenest option.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🤖</div>
+        <h3>Smart Suggestions</h3>
+        <p class="small">Recommendations balancing time, cost and environmental impact.</p>
+      </div>
+    </section>
+
+    <!-- Map + Routes -->
+    <section id="routes" class="main" aria-labelledby="routes-heading">
+      <div>
+        <div id="map"></div>
+
+        <!-- Quick summary / recommendation -->
+        <div style="display:flex;gap:12px;margin-top:14px;">
+          <div class="card" style="flex:1">
+            <h4 style="margin:0 0 8px 0">Selected Route</h4>
+            <div id="selectedSummary" class="small">No route selected — click "View" on a route.</div>
+          </div>
+          <div class="card" style="width:260px;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+            <div style="font-size:12px;color:var(--muted);">Green score</div>
+            <div id="greenScore" style="font-size:28px;color:#065f46;font-weight:800">—</div>
+            <div class="small">Higher is greener</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <!-- Replaced free-text inputs with dropdowns from File 3 -->
+        <div style="margin-bottom:8px;display:flex;gap:8px;align-items:center;">
+          <select id="startCity" style="flex:1;padding:10px;border-radius:10px;border:1px solid #e6e9ee;" onchange="onInputsChange()"></select>
+          <select id="endCity" style="flex:1;padding:10px;border-radius:10px;border:1px solid #e6e9ee;" onchange="onInputsChange()"></select>
+        </div>
+
+        <!-- transport mini buttons -->
+        <div class="muted">Preferred transport (choose one — acts as a filter)</div>
+        <div class="mode-row" id="modeRow" role="tablist" aria-label="Transport modes"></div>
+
+        <div id="warning" class="hidden" style="margin-top:8px"></div>
+
+        <div id="recommendationContainer"></div>
+
+        <div id="routeListContainer">
+          <div class="route-list" id="routeList" aria-live="polite"></div>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn" onclick="onInputsChange()">Recalculate</button>
+          <button class="btn" onclick="clearSaved()">Clear Saved</button>
+          <button class="cta" onclick="openPlannerFromLaunch()">Open Planner</button>
+        </div>
+      </aside>
+    </section>
+
+    <!-- Saved tab (stores saved routes) -->
+    <section id="saved" class="card hidden" style="margin-bottom:18px;">
+      <h3>Saved Routes</h3>
+      <div id="savedList" style="margin-top:12px;"></div>
+    </section>
+
+    <!-- Planner (reads from saved + filters) -->
+    <section id="planner" class="card hidden" style="margin-bottom:18px;padding:12px;">
+      <h3>Planner</h3>
+      <div class="small">Trips you've planned (from saved routes)</div>
+      <div id="plannerToolbar" style="margin-top:12px;"></div>
+      <div id="plannerList" style="margin-top:12px;"></div>
+    </section>
+
+    <!-- Footer CTA -->
+    <footer id="contact">
+      <h3>Ready to explore greener routes?</h3>
+      <p style="max-width:800px;margin:8px auto 12px;color:rgba(255,255,255,0.9)">Compare CO₂, time, and cost — pick routes that benefit both you and the planet.</p>
+      <button class="cta" onclick="showTab('saved')">Try the Optimiser</button>
+    </footer>
+  </div>
+
+  <!-- Chat placeholder button (no chatbot implemented) -->
+  <div class="chat-placeholder" id="chatPlaceholder" title="AI Assistant">💬</div>
+  <div class="chat-modal hidden" id="chatModal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><strong>AI Assistant</strong><button onclick="toggleChatModal()">✖</button></div>
+    <div class="small" style="margin-bottom:8px">Chat integration placeholder — chat functionality not implemented in this build.</div>
+    <textarea style="width:100%;height:120px;border:1px solid #e6e9ee;border-radius:8px;padding:8px" placeholder="Type a question (demo only)..."></textarea>
+    <div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="toggleChatModal()">Close</button><button class="cta" onclick="alert('Chat not connected — placeholder only')">Send</button></div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <script>
+    /********************************************************************
+     * Full merged app script (edited per user request)
+     * - Planner reads from Saved and offers filters (wheelchair, stair-free, best air)
+     * - Compare modal shows CO2 side-by-side + percent diff
+     * - Fossil mode: when carFossil selected, invert to fossil-theme on routes page; switching away restores palette
+     * - Emojis displayed for transport buttons
+     * - "Try the Optimiser" now opens Saved
+     * - Chat placeholder exists (button + modal) but no chatbot code
+     * - Green score computed as blended environmental score
+     ********************************************************************/
+
+    // --- Cities (real lat/lon)
+    const cities = [
+      { name: "London", lat: 51.5074, lon: -0.1278, region: "England" },
+      { name: "Birmingham", lat: 52.4862, lon: -1.8904, region: "England" },
+      { name: "Manchester", lat: 53.4808, lon: -2.2426, region: "England" },
+      { name: "Glasgow", lat: 55.8642, lon: -4.2518, region: "Scotland" },
+      { name: "Edinburgh", lat: 55.9533, lon: -3.1883, region: "Scotland" },
+      { name: "Liverpool", lat: 53.4084, lon: -2.9916, region: "England" },
+      { name: "Leeds", lat: 53.8008, lon: -1.5491, region: "England" },
+      { name: "Bristol", lat: 51.4545, lon: -2.5879, region: "England" },
+      { name: "Newcastle", lat: 54.9783, lon: -1.6178, region: "England" },
+      { name: "Cardiff", lat: 51.4816, lon: -3.1791, region: "Wales" },
+      { name: "Oxford", lat: 51.7520, lon: -1.2577, region: "England" },
+      { name: "Cambridge", lat: 52.2053, lon: 0.1218, region: "England" },
+      { name: "Brighton", lat: 50.8225, lon: -0.1372, region: "England" },
+      { name: "Bath", lat: 51.3811, lon: -2.3590, region: "England" },
+      { name: "York", lat: 53.9600, lon: -1.0873, region: "England" },
+      { name: "Norwich", lat: 52.6309, lon: 1.2974, region: "England" },
+      { name: "Exeter", lat: 50.7184, lon: -3.5339, region: "England" },
+      { name: "Canterbury", lat: 51.2802, lon: 1.0789, region: "England" },
+      { name: "Winchester", lat: 51.0632, lon: -1.3080, region: "England" },
+      { name: "Salisbury", lat: 51.0693, lon: -1.7944, region: "England" },
+      { name: "Guildford", lat: 51.2362, lon: -0.5704, region: "England" },
+      { name: "Reading", lat: 51.4543, lon: -0.9781, region: "England" },
+      { name: "Luton", lat: 51.8787, lon: -0.4200, region: "England" },
+      { name: "Colchester", lat: 51.8860, lon: 0.9035, region: "England" },
+      { name: "Cheltenham", lat: 51.8994, lon: -2.0783, region: "England" },
+      { name: "Gloucester", lat: 51.8642, lon: -2.2382, region: "England" },
+      { name: "Peterborough", lat: 52.5695, lon: -0.2405, region: "England" },
+      { name: "Ipswich", lat: 52.0594, lon: 1.1556, region: "England" }
+    ];
+
+    // --- Transport modes & metadata (include emojis explicitly in name)
+    const transportModes = {
+      publicTransport: { key:'publicTransport', name: "🚆 Public Transport", co2PerKm_g: 41, speed_kmh: 60, color: '#f97316' },
+      cycling:        { key:'cycling', name: "🚴 Cycling", co2PerKm_g: 0, speed_kmh: 20, color: '#2563eb' },
+      ev:             { key:'ev', name: "⚡ Electric Vehicle", co2PerKm_g: 50, speed_kmh: 80, color: '#06b6d4' },
+      walking:        { key:'walking', name: "🚶 Walking", co2PerKm_g: 0, speed_kmh: 5, color: '#10b981' },
+      carFossil:      { key:'carFossil', name: "🚗 Car (Fossil Fuel)", co2PerKm_g: 192, speed_kmh: 80, color: '#dc2626' }
+    };
+
+    // --- Example multi-modal routes (kept)
+    const exampleRoutes = [
+      { id: 'A', title: 'Fastest (EV)', legs: [{mode:'ev', dist_km:12}], note:'Door-to-door EV' },
+      { id: 'B', title: 'Public Transport', legs: [{mode:'walking',dist_km:0.6},{mode:'publicTransport',dist_km:10},{mode:'walking',dist_km:0.4}], note:'Short walks + train/bus' },
+      { id: 'C', title: 'Active + Tram', legs: [{mode:'cycling',dist_km:4},{mode:'publicTransport',dist_km:8}], note:'Cycle to tram stop' },
+      { id: 'D', title: 'Zero-Carbon (Walk + Cycle)', legs: [{mode:'walking',dist_km:1},{mode:'cycling',dist_km:11}], note:'Mix walking and cycling' }
+    ];
+
+    // --- Mode data for calcRoute computations
+    const modeData = {
+      walking: { co2_g_per_km: 0, speed_kmh: 5, cost: 0 },
+      cycling: { co2_g_per_km: 0, speed_kmh: 15, cost: 0 },
+      publicTransport: { co2_g_per_km: transportModes.publicTransport.co2PerKm_g, speed_kmh: transportModes.publicTransport.speed_kmh, cost: 2.8 },
+      ev: { co2_g_per_km: transportModes.ev.co2PerKm_g, speed_kmh: transportModes.ev.speed_kmh, cost: 6 },
+      carFossil: { co2_g_per_km: transportModes.carFossil.co2PerKm_g, speed_kmh: transportModes.carFossil.speed_kmh, cost: 12 }
+    };
+
+    // --- Train connection graph (for publicTransport routing)
+    const directConnections = {/* same as earlier, omitted for brevity in this editor view */};
+
+    // ----- Helper functions
+    function calculateDistance(city1, city2) {
+      const R = 6371;
+      const dLat = (city2.lat - city1.lat) * Math.PI / 180;
+      const dLon = (city2.lon - city1.lon) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(city1.lat * Math.PI / 180) * Math.cos(city2.lat * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    function hasDirectConnection(city1, city2, mode) {
+      if (mode === 'carFossil' || mode === 'ev') return true;
+      if (mode === 'publicTransport') {
+        if (directConnections[city1] && directConnections[city1].includes(city2)) return true;
+        if (directConnections[city2] && directConnections[city2].includes(city1)) return true;
+        return false;
+      }
+      return false;
+    }
+
+    function findOptimalRoute(startCity, endCity, mode) {
+      const distance = calculateDistance(startCity, endCity);
+
+      if (mode === 'carFossil' || mode === 'ev') {
+        return [startCity, endCity];
+      }
+
+      if (mode === 'publicTransport') {
+        if (hasDirectConnection(startCity.name, endCity.name, mode)) return [startCity, endCity];
+
+        for (let i = 0; i < cities.length; i++) {
+          const intermediate = cities[i];
+          if (intermediate.name === startCity.name || intermediate.name === endCity.name) continue;
+          if (hasDirectConnection(startCity.name, intermediate.name, mode) &&
+              hasDirectConnection(intermediate.name, endCity.name, mode)) {
+            return [startCity, intermediate, endCity];
+          }
+        }
+        return [startCity, endCity];
+      }
+
+      if (mode === 'walking' || mode === 'cycling') {
+        if (distance <= 5) return [startCity, endCity];
+        if (distance > 50) {
+          const intermediates = cities.filter(c => c.name !== startCity.name && c.name !== endCity.name);
+          let bestRoute = [startCity, endCity];
+          let bestDistance = distance;
+          for (let i = 0; i < intermediates.length; i++) {
+            const intermediate = intermediates[i];
+            const dist1 = calculateDistance(startCity, intermediate);
+            const dist2 = calculateDistance(intermediate, endCity);
+            const totalDist = dist1 + dist2;
+            if (totalDist < bestDistance * 1.2) {
+              bestRoute = [startCity, intermediate, endCity];
+              bestDistance = totalDist;
+            }
+          }
+          return bestRoute;
+        }
+        return [startCity, endCity];
+      }
+      return [startCity, endCity];
+    }
+
+    function estimateTime(distance, modeKey) {
+      const speeds = { publicTransport: 60, cycling: 20, ev: 80, walking: 5, carFossil: 80 };
+      const hours = distance / (speeds[modeKey] || 50);
+      const h = Math.floor(hours);
+      const m = Math.round((hours - h) * 60);
+      return h > 0 ? (h + 'h ' + m + 'm') : (m + 'm');
+    }
+
+    // Build Leaflet map
+    const map = L.map('map', { zoomControl:true }).setView([53.0, -1.5], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Layer groups for polylines & markers (clearable)
+    const routeLayer = L.layerGroup().addTo(map);
+    const markerLayer = L.layerGroup().addTo(map);
+
+    // --- Recommendation engine weights
+    const WEIGHTS = { co2: 0.5, distance: 0.25, time: 0.25 };
+
+    function calcRouteFromLegs(legs, id = '') {
+      let total_km = 0, total_time_min = 0, total_cost = 0, total_co2_g = 0;
+      legs.forEach(leg=>{
+        const m = modeData[leg.mode];
+        const d = Number(leg.dist_km);
+        total_km += d;
+        total_time_min += (d / (m.speed_kmh || 50)) * 60;
+        total_cost += (m.cost || 0);
+        total_co2_g += (m.co2_g_per_km || 0) * d;
+      });
+      const co2_per_km = total_co2_g / Math.max(1, total_km);
+      const co2Score = Math.max(0, Math.min(1, (1 - (co2_per_km / 200))));
+      return {
+        id,
+        total_km: Number(total_km.toFixed(2)),
+        time_min: Math.round(total_time_min),
+        cost: Number(total_cost.toFixed(2)),
+        co2_grams: Math.round(total_co2_g),
+        co2_per_km: Number(co2_per_km.toFixed(1)),
+        co2Score
+      };
+    }
+
+    // ---- UI initialisation
+    function initUI(){
+      const startSelect = document.getElementById('startCity');
+      const endSelect = document.getElementById('endCity');
+      const sorted = cities.slice().sort((a,b)=>a.name.localeCompare(b.name));
+      startSelect.innerHTML = sorted.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+      endSelect.innerHTML = sorted.map(c => `<option value="${c.name}" ${c.name==='Edinburgh'?'selected':''}>${c.name}</option>`).join('');
+
+      // mode buttons (show emojis via transportModes.name)
+      const modeRow = document.getElementById('modeRow');
+      const modeKeys = Object.keys(transportModes);
+      modeRow.innerHTML = modeKeys.map(k => {
+        const md = transportModes[k];
+        return `<button class="mini-mode" data-mode="${k}" onclick="selectModeFromBtn(event,'${k}')">${md.name}</button>`;
+      }).join('');
+
+      // set initial mode active - default to EV per user's preference
+      selectedMode = 'ev';
+      setActiveModeButton();
+      // default start/end
+      document.getElementById('startCity').value = 'London';
+      document.getElementById('endCity').value = 'Edinburgh';
+      onInputsChange();
+      renderSavedList();
+      renderPlannerList();
+    }
+
+    let selectedMode = 'ev';
+
+    function selectModeFromBtn(e, mode){
+      selectedMode = mode;
+      setActiveModeButton();
+      // fossil theme toggle
+      if(mode === 'carFossil'){
+        document.body.classList.add('fossil-theme');
+        document.getElementById('warning').classList.remove('hidden');
+        document.getElementById('warning').innerHTML = `<div class="warning-banner">Warning: Fossil fuel route selected — highest CO₂ impact.</div>`;
+      } else {
+        // remove fossil theme when switching to another mode
+        document.body.classList.remove('fossil-theme');
+        document.getElementById('warning').classList.add('hidden');
+        document.getElementById('warning').innerHTML = '';
+      }
+      onInputsChange();
+    }
+
+    function setActiveModeButton(){
+      const buttons = document.querySelectorAll('.mini-mode');
+      buttons.forEach(b=> b.classList.toggle('active', b.getAttribute('data-mode') === selectedMode));
+    }
+
+    // --- When start/end/mode changes
+    function onInputsChange(){
+      // ensure we show the map
+      showTab('routes');
+      const startName = document.getElementById('startCity').value;
+      const endName = document.getElementById('endCity').value;
+      if(!startName || !endName) return;
+      const startCity = cities.find(c=>c.name===startName);
+      const endCity = cities.find(c=>c.name===endName);
+      updateRoutesForSelection(startCity, endCity, selectedMode);
+    }
+
+    // --- Build generated single-mode route and combine with exampleRoutes
+    function updateRoutesForSelection(startCity, endCity, mode){
+      const nodes = findOptimalRoute(startCity, endCity, mode);
+      const legs = [];
+      for(let i=0;i<nodes.length-1;i++){
+        const a = nodes[i], b = nodes[i+1];
+        const d = calculateDistance(a,b);
+        if(mode === 'publicTransport'){
+          if(i===0) { legs.push({mode:'walking', dist_km: Math.min(0.8, Math.max(0.2, d*0.05))}); }
+          legs.push({mode:'publicTransport', dist_km: d});
+          if(i===nodes.length-2) { legs.push({mode:'walking', dist_km: Math.min(0.8, Math.max(0.2, d*0.05))}); }
+        } else {
+          const legMode = (mode==='carFossil') ? 'carFossil' : mode;
+          legs.push({mode:legMode, dist_km: d});
+        }
+      }
+      const generated = { id:'GEN', title: `${transportModes[mode].name} — Generated`, legs, note:`Single-mode generated route: ${startCity.name} → ${endCity.name}`, nodes };
+
+      const combined = [generated, ...exampleRoutes.map(r => ({...r})) ];
+
+      const filtered = combined.filter(r => {
+        if(r.id === 'GEN') return true;
+        return r.legs.some(l => {
+          if(selectedMode === 'publicTransport') return l.mode === 'publicTransport' || l.mode === 'walking';
+          return l.mode === selectedMode;
+        });
+      });
+
+      const evaluated = filtered.map(r => {
+        let legsToEval = r.legs.map(l => ({...l}));
+        if(r.id !== 'GEN'){
+          const straightDist = calculateDistance(startCity, endCity);
+          const declaredTotal = r.legs.reduce((s,l)=> s + (l.dist_km||0), 0) || 1;
+          const scale = straightDist / declaredTotal;
+          legsToEval = r.legs.map(l => ({ mode: l.mode, dist_km: (l.dist_km||0) * scale }));
+        }
+        const summary = calcRouteFromLegs(legsToEval, r.id);
+        return {...r, legs: legsToEval, summary, originalLegs: r.legs, nodes: r.nodes || [startCity, endCity] };
+      });
+
+      const maxDistance = Math.max(...evaluated.map(e=>e.summary.total_km), 1);
+      const maxTime = Math.max(...evaluated.map(e=>e.summary.time_min), 1);
+      evaluated.forEach(e => {
+        const distScore = 1 - (e.summary.total_km / maxDistance);
+        const timeScore = 1 - (e.summary.time_min / maxTime);
+        e.recommendScore = WEIGHTS.co2 * e.summary.co2Score + WEIGHTS.distance * distScore + WEIGHTS.time * timeScore;
+      });
+
+      evaluated.sort((a,b) => b.recommendScore - a.recommendScore);
+
+      // compute green score for best route (blend co2Score (60%), time (20%), distance (20%))
+      if(evaluated.length) {
+        const best = evaluated[0];
+        const greenPercent = computeGreenScore(best, evaluated, maxDistance, maxTime);
+        document.getElementById('greenScore').textContent = `${Math.round(greenPercent)}`;
+      } else {
+        document.getElementById('greenScore').textContent = '—';
+      }
+
+      renderRecommendation(evaluated[0], startCity, endCity);
+      renderRoutes(evaluated, startCity, endCity);
+    }
+
+    function computeGreenScore(route, evaluatedList, maxDistance, maxTime){
+      // co2Score already 0..1 where higher is greener
+      const co2Weight = 0.6, timeWeight = 0.2, distWeight = 0.2;
+      const co2 = route.summary.co2Score || 0;
+      const tScore = 1 - (route.summary.time_min / (maxTime || route.summary.time_min || 1));
+      const dScore = 1 - (route.summary.total_km / (maxDistance || route.summary.total_km || 1));
+      const blended = (co2 * co2Weight) + (tScore * timeWeight) + (dScore * distWeight);
+      return Math.max(0, Math.min(100, blended * 100));
+    }
+
+    function renderRecommendation(best, startCity, endCity){
+      const rc = document.getElementById('recommendationContainer');
+      if(!best) { rc.innerHTML = ''; return; }
+      const s = best.summary;
+      rc.innerHTML = `
+        <div class="recommend">
+          <h4>Recommended Route</h4>
+          <div style="font-weight:700">${best.title} — ${s.total_km} km • ${s.time_min} min • ${s.co2_grams} g CO₂</div>
+          <div class="small" style="margin-top:6px">${best.note || ''}</div>
+          <div style="margin-top:8px;color:var(--muted)">Recommendation score: ${(best.recommendScore*100).toFixed(0)}%</div>
+        </div>
+      `;
+    }
+
+    // --- Render route list and draw polylines (kept mostly as before)
+    function renderRoutes(routes, startCity, endCity){
+      routeLayer.clearLayers();
+      markerLayer.clearLayers();
+      const container = document.getElementById('routeList');
+      container.innerHTML = '';
+
+      const allCoords = [];
+
+      routes.forEach((r, index) => {
+        const stats = r.summary;
+        const id = r.id || ('R'+index);
+        const div = document.createElement('div');
+        div.className = 'route-card';
+        div.innerHTML = `
+          <div class="route-top">
+            <div>
+              <div style="font-weight:700">${r.title} <span style="font-weight:600;color:var(--muted);font-size:12px">#${id}</span></div>
+              <div class="meta">${r.note || ''}</div>
+            </div>
+            <div style="text-align:right">
+              <div class="co2">${stats.co2_grams} g CO₂</div>
+              <div class="small">${stats.co2_per_km} g/km</div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="small">${stats.total_km} km • ${stats.time_min} min</div>
+            <div style="font-weight:700">${stats.cost}£</div>
+          </div>
+          <div class="select">
+            <button class="btn" onclick='viewRoute("${id}")'>View</button>
+            <button class="btn" onclick='saveThisRoute(${JSON.stringify(escapeForSave(r))})'>Save</button>
+            <div style="margin-left:auto;color:var(--muted);font-weight:800">${Math.round(r.recommendScore*100)}%</div>
+          </div>
+        `;
+        container.appendChild(div);
+
+        // draw polylines & markers (reuse earlier logic)
+        const coordsByLeg = [];
+        const start = startCity; const end = endCity;
+        const declaredLegs = r.originalLegs || r.legs;
+        const totalDeclared = declaredLegs.reduce((a,b)=>a+(b.dist_km||0),0) || 1;
+        let accum = 0;
+        declaredLegs.forEach(l => {
+          const startFrac = accum / totalDeclared;
+          const endFrac = Math.min(1, (accum + (l.dist_km||0)) / totalDeclared);
+          const a = interpLatLng(start,end,startFrac);
+          const b = interpLatLng(start,end,endFrac);
+          coordsByLeg.push({ mode: l.mode, coords: [ [a.lat,a.lon], [b.lat,b.lon] ] });
+          accum += (l.dist_km || 0);
+        });
+
+        coordsByLeg.forEach(obj => {
+          const col = (transportModes[obj.mode] && transportModes[obj.mode].color) || '#666';
+          const poly = L.polyline(obj.coords, { color: col, weight: 5, opacity: 0.9 }).addTo(routeLayer);
+          if(index === 0) poly.setStyle({ weight: 7, opacity: 1.0 }).bringToFront();
+        });
+
+        if(index === 0){
+          coordsByLeg.forEach(cbl => cbl.coords.forEach(pt => allCoords.push(pt)));
+          if(allCoords.length){
+            const firstCoords = coordsByLeg[0].coords[0];
+            const lastCoords = coordsByLeg[coordsByLeg.length-1].coords.slice(-1)[0];
+            L.marker(firstCoords).addTo(markerLayer).bindPopup('<b>Start</b>');
+            L.marker(lastCoords).addTo(markerLayer).bindPopup('<b>End</b>');
+            map.fitBounds(routeLayer.getBounds().pad(0.2));
+          }
+        }
+      });
+
+      if(routeLayer.getLayers().length === 0){
+        map.setView([53.0, -1.5], 6);
+      }
+    }
+
+    function interpLatLng(a,b,t){
+      return { lat: a.lat + (b.lat - a.lat) * t, lon: a.lon + (b.lon - a.lon) * t };
+    }
+
+    function escapeForSave(routeObj){
+      const saveObj = { id: routeObj.id, title: routeObj.title, note: routeObj.note, legs: routeObj.legs, summary: routeObj.summary };
+      return saveObj;
+    }
+
+    // --- Save functionality (localStorage)
+    function saveThisRoute(routeSnapshot){
+      let saved = JSON.parse(localStorage.getItem('savedRoutes') || '[]');
+      const signature = JSON.stringify(routeSnapshot);
+      if(!saved.some(s => JSON.stringify(s) === signature)){
+        saved.push(routeSnapshot);
+        localStorage.setItem('savedRoutes', JSON.stringify(saved));
+        alert('Route saved.');
+      } else {
+        alert('Route already saved.');
+      }
+      renderSavedList();
+      renderPlannerList();
+    }
+
+    function renderSavedList(){
+      const saved = JSON.parse(localStorage.getItem('savedRoutes') || '[]');
+      const container = document.getElementById('savedList');
+      if(!container) return;
+      if(saved.length === 0){
+        container.innerHTML = '<div class="small">No saved routes yet — click "Save" on a route to keep it here.</div>';
+        return;
+      }
+      container.innerHTML = saved.map((s, idx) => {
+        const summ = s.summary || {};
+        return `<div style="border:1px solid #e6e9ee;padding:10px;border-radius:8px;margin-bottom:8px;background:#fff">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div><strong>${s.title}</strong><div class="small">${s.note || ''}</div></div>
+              <div style="text-align:right"><div style="font-weight:800">${summ.co2_grams || '—'} g CO₂</div><div class="small">${summ.total_km || '—'} km</div></div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function clearSaved(){
+      if(confirm('Clear all saved routes?')) {
+        localStorage.removeItem('savedRoutes');
+        renderSavedList();
+        renderPlannerList();
+      }
+    }
+
+    // --- Planner reads from saved routes and supports filters
+    function renderPlannerList(filters = {}){
+      const saved = JSON.parse(localStorage.getItem('savedRoutes') || '[]');
+      const container = document.getElementById('plannerList');
+      const toolbar = document.getElementById('plannerToolbar');
+      if(!container || !toolbar) return;
+      if(saved.length === 0){
+        toolbar.innerHTML = '';
+        container.innerHTML = '<div class="small">No planned trips yet.</div>';
+        return;
+      }
+      // synthesize attributes for demo: wheelchair, stairFree, airQuality
+      const enriched = saved.map((s, idx) => ({
+        ...s,
+        uid: idx+1,
+        wheelchair: !!(s.summary && Math.round(s.summary.co2_per_km) % 3 === 0),
+        stairFree: !!(s.summary && Math.round(s.summary.co2_per_km) % 2 === 1),
+        airQuality: Math.round(50 + (s.summary && s.summary.co2_per_km ? (100 - s.summary.co2_per_km) : 10))
+      }));
+
+      let list = enriched;
+      if(filters.wheelchair) list = list.filter(i => i.wheelchair);
+      if(filters.stairFree) list = list.filter(i => i.stairFree);
+      if(filters.bestAir) list = list.sort((a,b) => b.airQuality - a.airQuality);
+
+      // toolbar controls
+      toolbar.innerHTML = `
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <label><input type="checkbox" id="filterWheel" ${filters.wheelchair? 'checked':''} /> ♿ Wheelchair accessible</label>
+          <label><input type="checkbox" id="filterStair" ${filters.stairFree? 'checked':''} /> 🪜 Stair-free</label>
+          <label><input type="checkbox" id="filterAir" ${filters.bestAir? 'checked':''} /> 🌬️ Best air quality</label>
+          <button class="btn" onclick="applyPlannerFilters()">Apply</button>
+          <button class="btn" onclick="renderPlannerList()">Reset</button>
+        </div>
+      `;
+
+      container.innerHTML = list.map(i => `
+        <div style="border:1px solid #e6e9ee;padding:10px;border-radius:8px;margin-bottom:8px;background:#fff">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <strong>#${i.uid} ${i.title}</strong>
+              <div class="small">${i.note || ''}</div>
+              <div class="small">Attributes: ${i.wheelchair? '♿' : ''} ${i.stairFree? '🪜' : ''} Air:${i.airQuality}</div>
+            </div>
+            <div style="text-align:right"><div style="font-weight:800">${(i.summary && i.summary.co2_grams) || '—'} g CO₂</div><div class="small">${(i.summary && i.summary.total_km) || '—'} km</div></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function applyPlannerFilters(){
+      const w = document.getElementById('filterWheel') && document.getElementById('filterWheel').checked;
+      const s = document.getElementById('filterStair') && document.getElementById('filterStair').checked;
+      const a = document.getElementById('filterAir') && document.getElementById('filterAir').checked;
+      renderPlannerList({ wheelchair: w, stairFree: s, bestAir: a });
+    }
+
+    // --- View handler
+    function viewRoute(id){
+      const start = document.getElementById('startCity').value;
+      const end = document.getElementById('endCity').value;
+      const startCity = cities.find(c=>c.name===start);
+      const endCity = cities.find(c=>c.name===end);
+      updateRoutesForSelection(startCity, endCity, selectedMode);
+      const lastEval = window.__lastEvaluatedRoutes || [];
+      const found = lastEval.find(r => r.id === id);
+      if(found){
+        const s = found.summary;
+        document.getElementById('selectedSummary').textContent = `${found.title}: ${s.total_km} km • ${s.time_min} min • ${s.co2_grams} g CO₂ (${s.co2_per_km} g/km) • ${s.cost}£`;
+        const maxDistance = Math.max(...lastEval.map(e=>e.summary.total_km),1);
+        const maxTime = Math.max(...lastEval.map(e=>e.summary.time_min),1);
+        document.getElementById('greenScore').textContent = `${Math.round(computeGreenScore(found, lastEval, maxDistance, maxTime))}`;
+        highlightRouteOnMap(found);
+      } else {
+        alert('Route not found to view (try recalculating).');
+      }
+    }
+
+    function highlightRouteOnMap(route){
+      routeLayer.clearLayers();
+      markerLayer.clearLayers();
+      const coordsByLeg = [];
+      const start = document.getElementById('startCity').value;
+      const end = document.getElementById('endCity').value;
+      const startC = cities.find(c=>c.name===start);
+      const endC = cities.find(c=>c.name===end);
+      const declaredLegs = route.originalLegs || route.legs;
+      const totalDeclared = declaredLegs.reduce((a,b)=>a+(b.dist_km||0),0) || 1;
+      let accum = 0;
+      declaredLegs.forEach(l => {
+        const startFrac = accum / totalDeclared;
+        const endFrac = Math.min(1, (accum + (l.dist_km||0)) / totalDeclared);
+        const a = interpLatLng(startC,endC,startFrac);
+        const b = interpLatLng(startC,endC,endFrac);
+        coordsByLeg.push({ mode: l.mode, coords: [ [a.lat,a.lon], [b.lat,b.lon] ] });
+        accum += (l.dist_km || 0);
+      });
+      coordsByLeg.forEach(obj => {
+        const col = (transportModes[obj.mode] && transportModes[obj.mode].color) || '#666';
+        L.polyline(obj.coords, { color: col, weight: 8, opacity: 1.0 }).addTo(routeLayer);
+      });
+      if(coordsByLeg.length){
+        const first = coordsByLeg[0].coords[0];
+        const last = coordsByLeg[coordsByLeg.length-1].coords.slice(-1)[0];
+        L.marker(first).addTo(markerLayer).bindPopup('<b>Start</b>').openPopup();
+        L.marker(last).addTo(markerLayer).bindPopup('<b>End</b>');
+        map.fitBounds(routeLayer.getBounds().pad(0.2));
+      }
+    }
+
+    window.__lastEvaluatedRoutes = [];
+    const originalRenderRoutes = renderRoutes;
+    renderRoutes = function(routes, startCity, endCity){
+      window.__lastEvaluatedRoutes = routes;
+      originalRenderRoutes(routes, startCity, endCity);
+    };
+
+    // ---- Tabs and interactions
+    function showTab(tab){
+      document.getElementById('home').classList.toggle('hidden', tab !== 'home');
+      document.getElementById('features').classList.toggle('hidden', tab !== 'features');
+      document.getElementById('routes').classList.toggle('hidden', tab !== 'routes');
+      document.getElementById('saved').classList.toggle('hidden', tab !== 'saved');
+      document.getElementById('planner').classList.toggle('hidden', tab !== 'planner');
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      if(tab === 'home') document.querySelectorAll('.tab-btn')[0].classList.add('active');
+      if(tab === 'features') document.querySelectorAll('.tab-btn')[1].classList.add('active');
+      if(tab === 'routes') document.getElementById('routesTabBtn').classList.add('active');
+      if(tab === 'saved') { document.getElementById('savedTabBtn').classList.add('active'); renderSavedList(); }
+      if(tab === 'planner') { document.getElementById('plannerTabBtn').classList.add('active'); renderPlannerList(); }
+
+      // Per requirement: if user selects carFossil and then navigates away, restore palette
+      if(selectedMode === 'carFossil' && tab === 'routes'){
+        // keep fossil theme active only when on routes map
+        document.body.classList.add('fossil-theme');
+        document.getElementById('warning').classList.remove('hidden');
+      } else {
+        // otherwise remove fossil theme
+        document.body.classList.remove('fossil-theme');
+        document.getElementById('warning').classList.add('hidden');
+      }
+    }
+
+    // Launch Tool now opens Planner which reads from Saved
+    function launchTool(){
+      showTab('planner');
+      renderPlannerList();
+    }
+    function openPlannerFromLaunch(){ launchTool(); }
+
+    // init app
+    initUI();
+
+    // Chat placeholder toggle
+    const chatBtn = document.getElementById('chatPlaceholder');
+    const chatModal = document.getElementById('chatModal');
+    function toggleChatModal(){ chatModal.classList.toggle('hidden'); }
+    chatBtn.addEventListener('click', toggleChatModal);
+
+  </script>
+</body>
+</html>
