@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UK Eco Routes - Green Travel Pathfinder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #e0f7f4 0%, #d4edda 100%);
+            min-height: 100vh;
+            padding: 24px;
+            transition: background 0.5s ease;
+        }
+
+        body.fossil-mode {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        }
+
+        body.fossil-mode .card {
+            border: 2px solid #dc2626;
+        }
+
+        body.fossil-mode .icon {
+            color: #dc2626;
+        }
+
+        body.fossil-mode .result-box {
+            background: #fef2f2;
+            border-color: #fca5a5;
+        }
+
+        body.fossil-mode .result-title {
+            color: #991b1b;
+        }
+
+        body.fossil-mode .mode-btn.active {
+            background: #fee2e2;
+            border-color: #dc2626;
+            color: #991b1b;
+        }
+
+        body.fossil-mode .eco-badge {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        body.fossil-mode .route-path {
+            border-left-color: #dc2626;
+        }
+
+        body.fossil-mode .step-icon {
+            background: #dc2626;
+        }
+
+        body.fossil-mode .co2-metric {
+            border-left-color: #dc2626;
+        }
+
+        body.fossil-mode .co2-value {
+            color: #991b1b;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .icon {
+            width: 32px;
+            height: 32px;
+            color: #10b981;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #1f2937;
+        }
+
+        h2 {
+            font-size: 24px;
+            color: #1f2937;
+            margin-bottom: 24px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        select {
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .transport-modes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .mode-btn {
+            padding: 12px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .mode-btn:hover {
+            border-color: #10b981;
+        }
+
+        .mode-btn.active {
+            background: #d1fae5;
+            border-color: #10b981;
+            color: #047857;
+        }
+
+        .result-box {
+            background: #f0fdf4;
+            border: 2px solid #86efac;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .result-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #15803d;
+            margin-bottom: 16px;
+        }
+
+        .route-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .route-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .route-mode {
+            font-weight: 600;
+            color: #047857;
+            font-size: 16px;
+        }
+
+        .eco-badge {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .route-path {
+            background: #f9fafb;
+            border-left: 4px solid #10b981;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+
+        .route-map {
+            background: #ffffff;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 16px 0;
+            position: relative;
+        }
+
+        .map-title {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .map-container {
+            width: 100%;
+            height: 400px;
+            overflow: auto;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .map-canvas {
+            min-width: 600px;
+            min-height: 400px;
+            background: #f0f9ff;
+            position: relative;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/1/14/Uk_outline_map.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        body.fossil-mode .map-canvas {
+            filter: hue-rotate(180deg) saturate(2);
+        }
+
+        .uk-map-background {
+            display: none;
+        }
+
+        .map-marker {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #10b981;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        body.fossil-mode .map-marker {
+            background: #dc2626;
+        }
+
+        .map-marker.start {
+            width: 20px;
+            height: 20px;
+            background: #3b82f6;
+        }
+
+        .map-marker.end {
+            width: 20px;
+            height: 20px;
+            background: #8b5cf6;
+        }
+
+        .map-line {
+            position: absolute;
+            background: #10b981;
+            height: 3px;
+            transform-origin: 0 0;
+            z-index: 5;
+            opacity: 0.6;
+        }
+
+        body.fossil-mode .map-line {
+            background: #dc2626;
+        }
+
+        .map-label {
+            position: absolute;
+            font-size: 11px;
+            font-weight: 600;
+            color: #1f2937;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            white-space: nowrap;
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        .path-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .path-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            background: #10b981;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .step-details {
+            flex: 1;
+        }
+
+        .step-city {
+            font-weight: 600;
+            color: #047857;
+        }
+
+        .step-instruction {
+            color: #6b7280;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .co2-comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .co2-metric {
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+        }
+
+        .co2-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .co2-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #047857;
+        }
+
+        .co2-unit {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .route-details {
+            font-size: 14px;
+            color: #4b5563;
+            line-height: 1.6;
+            margin-top: 12px;
+        }
+
+        .info-box {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .info-text {
+            font-size: 14px;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+
+            .transport-modes {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h1>UK Eco Routes - Green Travel</h1>
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label for="startCity">Start City</label>
+                    <select id="startCity" onchange="calculateRoutes()">
+                        <option>London</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="endCity">End City</label>
+                    <select id="endCity" onchange="calculateRoutes()">
+                        <option>Edinburgh</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label style="display: block; margin-bottom: 12px;">Preferred Transport Mode</label>
+                <div class="transport-modes" id="transportModes"></div>
+            </div>
+
+            <div class="result-box">
+                <div class="result-title">Recommended Eco-Friendly Routes</div>
+                <div id="routesDisplay"></div>
+                <div class="co2-comparison" id="co2Comparison"></div>
+            </div>
+
+            <div class="info-box">
+                <svg style="width: 20px; height: 20px; color: #9ca3af; flex-shrink: 0; margin-top: 2px;" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                </svg>
+                <div class="info-text">
+                    <strong>Public Transport:</strong> Train/bus (lowest CO₂ per km)
+                    <strong style="margin-left: 16px;">Cycling:</strong> Zero emissions (best for short distances)
+                    <strong style="margin-left: 16px;">EV:</strong> Electric vehicle (zero local emissions)
+                    <strong style="margin-left: 16px;">Walking:</strong> Zero emissions (ideal under 5km)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var cities = [
+            { name: "London", lat: 51.5074, lon: -0.1278, region: "England" },
+            { name: "Birmingham", lat: 52.4862, lon: -1.8904, region: "England" },
+            { name: "Manchester", lat: 53.4808, lon: -2.2426, region: "England" },
+            { name: "Glasgow", lat: 55.8642, lon: -4.2518, region: "Scotland" },
+            { name: "Edinburgh", lat: 55.9533, lon: -3.1883, region: "Scotland" },
+            { name: "Liverpool", lat: 53.4084, lon: -2.9916, region: "England" },
+            { name: "Leeds", lat: 53.8008, lon: -1.5491, region: "England" },
+            { name: "Bristol", lat: 51.4545, lon: -2.5879, region: "England" },
+            { name: "Newcastle", lat: 54.9783, lon: -1.6178, region: "England" },
+            { name: "Cardiff", lat: 51.4816, lon: -3.1791, region: "Wales" },
+            { name: "Oxford", lat: 51.7520, lon: -1.2577, region: "England" },
+            { name: "Cambridge", lat: 52.2053, lon: 0.1218, region: "England" },
+            { name: "Brighton", lat: 50.8225, lon: -0.1372, region: "England" },
+            { name: "Bath", lat: 51.3811, lon: -2.3590, region: "England" },
+            { name: "York", lat: 53.9600, lon: -1.0873, region: "England" },
+            { name: "Norwich", lat: 52.6309, lon: 1.2974, region: "England" },
+            { name: "Exeter", lat: 50.7184, lon: -3.5339, region: "England" },
+            { name: "Canterbury", lat: 51.2802, lon: 1.0789, region: "England" },
+            { name: "Winchester", lat: 51.0632, lon: -1.3080, region: "England" },
+            { name: "Salisbury", lat: 51.0693, lon: -1.7944, region: "England" },
+            { name: "Guildford", lat: 51.2362, lon: -0.5704, region: "England" },
+            { name: "Reading", lat: 51.4543, lon: -0.9781, region: "England" },
+            { name: "Luton", lat: 51.8787, lon: -0.4200, region: "England" },
+            { name: "Colchester", lat: 51.8860, lon: 0.9035, region: "England" },
+            { name: "Cheltenham", lat: 51.8994, lon: -2.0783, region: "England" },
+            { name: "Gloucester", lat: 51.8642, lon: -2.2382, region: "England" },
+            { name: "Peterborough", lat: 52.5695, lon: -0.2405, region: "England" },
+            { name: "Ipswich", lat: 52.0594, lon: 1.1556, region: "England" }
+        ];
+
+        var transportModes = {
+            publicTransport: { name: "🚆 Public Transport", co2PerKm: 41, icon: "🚆" },
+            cycling: { name: "🚴 Cycling", co2PerKm: 0, icon: "🚴" },
+            ev: { name: "⚡ Electric Vehicle", co2PerKm: 50, icon: "⚡" },
+            walking: { name: "🚶 Walking", co2PerKm: 0, icon: "🚶" },
+            carFossil: { name: "🚗 Car (Fossil Fuel)", co2PerKm: 192, icon: "🚗" }
+        };
+
+        var selectedMode = 'publicTransport';
+
+        function calculateDistance(city1, city2) {
+            var R = 6371;
+            var dLat = (city2.lat - city1.lat) * Math.PI / 180;
+            var dLon = (city2.lon - city1.lon) * Math.PI / 180;
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(city1.lat * Math.PI / 180) * Math.cos(city2.lat * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function calculateCO2(distance, mode) {
+            return (distance * transportModes[mode].co2PerKm) / 1000;
+        }
+
+        function getRecommendedModes(distance) {
+            var modes = [];
+            
+            modes.push('walking');
+            modes.push('cycling');
+            modes.push('publicTransport');
+            modes.push('ev');
+            modes.push('carFossil');
+            
+            return modes;
+        }
+
+        // Direct public transport connections (train routes)
+        var directConnections = {
+            'London': ['Birmingham', 'Manchester', 'Edinburgh', 'Glasgow', 'Liverpool', 'Leeds', 'Bristol', 'Newcastle', 'Cardiff', 'Oxford', 'Cambridge', 'Brighton', 'Bath', 'York', 'Norwich', 'Exeter', 'Reading', 'Luton', 'Southampton'],
+            'Birmingham': ['London', 'Manchester', 'Edinburgh', 'Glasgow', 'Liverpool', 'Leeds', 'Bristol', 'Newcastle', 'Cardiff', 'Oxford', 'Nottingham', 'Leicester', 'Coventry', 'Gloucester', 'Cheltenham', 'Reading'],
+            'Manchester': ['London', 'Birmingham', 'Edinburgh', 'Glasgow', 'Liverpool', 'Leeds', 'Newcastle', 'Sheffield', 'York', 'Oxford', 'Bristol', 'Reading', 'Southampton'],
+            'Edinburgh': ['London', 'Birmingham', 'Manchester', 'Glasgow', 'Liverpool', 'Leeds', 'Newcastle', 'York', 'Bristol'],
+            'Glasgow': ['London', 'Birmingham', 'Manchester', 'Edinburgh', 'Liverpool', 'Newcastle', 'Leeds'],
+            'Liverpool': ['London', 'Birmingham', 'Manchester', 'Edinburgh', 'Glasgow', 'Leeds', 'Newcastle', 'York'],
+            'Leeds': ['London', 'Birmingham', 'Manchester', 'Edinburgh', 'Glasgow', 'Liverpool', 'Newcastle', 'York', 'Sheffield', 'Bristol', 'Nottingham'],
+            'Bristol': ['London', 'Birmingham', 'Manchester', 'Edinburgh', 'Leeds', 'Cardiff', 'Bath', 'Exeter', 'Plymouth', 'Reading', 'Oxford', 'Southampton', 'Gloucester'],
+            'Newcastle': ['London', 'Birmingham', 'Manchester', 'Edinburgh', 'Glasgow', 'Liverpool', 'Leeds', 'York'],
+            'Cardiff': ['London', 'Birmingham', 'Bristol', 'Manchester', 'Gloucester', 'Bath'],
+            'Oxford': ['London', 'Birmingham', 'Manchester', 'Bristol', 'Reading', 'Gloucester', 'Cheltenham'],
+            'Cambridge': ['London', 'Birmingham', 'Liverpool', 'Norwich', 'Peterborough', 'Leicester', 'Ipswich'],
+            'Brighton': ['London', 'Reading'],
+            'Bath': ['London', 'Bristol', 'Cardiff', 'Gloucester'],
+            'York': ['London', 'Manchester', 'Edinburgh', 'Liverpool', 'Leeds', 'Newcastle'],
+            'Norwich': ['London', 'Cambridge', 'Liverpool', 'Peterborough', 'Ipswich'],
+            'Exeter': ['London', 'Bristol', 'Plymouth', 'Bath'],
+            'Canterbury': ['London'],
+            'Winchester': ['London', 'Southampton', 'Bristol', 'Manchester', 'Reading'],
+            'Salisbury': ['London', 'Bristol', 'Bath'],
+            'Guildford': ['London', 'Reading'],
+            'Reading': ['London', 'Birmingham', 'Manchester', 'Oxford', 'Bristol', 'Southampton', 'Brighton', 'Winchester', 'Guildford', 'Bath'],
+            'Luton': ['London'],
+            'Colchester': ['London', 'Ipswich', 'Norwich'],
+            'Cheltenham': ['London', 'Birmingham', 'Oxford', 'Gloucester'],
+            'Gloucester': ['London', 'Birmingham', 'Cardiff', 'Bristol', 'Bath', 'Oxford', 'Reading', 'Cheltenham'],
+            'Peterborough': ['London', 'Cambridge', 'Norwich', 'Leeds', 'York', 'Leicester'],
+            'Ipswich': ['London', 'Cambridge', 'Norwich', 'Colchester'],
+            'Leicester': ['London', 'Birmingham', 'Cambridge', 'Peterborough', 'Nottingham'],
+            'Nottingham': ['London', 'Birmingham', 'Leeds', 'Leicester'],
+            'Sheffield': ['London', 'Manchester', 'Leeds'],
+            'Southampton': ['London', 'Bristol', 'Manchester', 'Reading', 'Winchester'],
+            'Plymouth': ['London', 'Bristol', 'Exeter']
+        };
+
+        function hasDirectConnection(city1, city2, mode) {
+            // Cars and EVs can always go direct (roads exist everywhere)
+            if (mode === 'carFossil' || mode === 'ev') {
+                return true;
+            }
+            
+            // Public transport needs actual train connections
+            if (mode === 'publicTransport') {
+                if (directConnections[city1] && directConnections[city1].includes(city2)) {
+                    return true;
+                }
+                if (directConnections[city2] && directConnections[city2].includes(city1)) {
+                    return true;
+                }
+                return false;
+            }
+            
+            // Walking and cycling can go anywhere but may need stops
+            return false;
+        }
+
+        function findOptimalRoute(startCity, endCity, mode) {
+            var distance = calculateDistance(startCity, endCity);
+            
+            // For cars and EVs: always direct
+            if (mode === 'carFossil' || mode === 'ev') {
+                return [startCity, endCity];
+            }
+            
+            // For public transport: check if direct connection exists
+            if (mode === 'publicTransport') {
+                if (hasDirectConnection(startCity.name, endCity.name, mode)) {
+                    return [startCity, endCity];
+                }
+                
+                // Find route through intermediate city with connections
+                for (var i = 0; i < cities.length; i++) {
+                    var intermediate = cities[i];
+                    if (intermediate.name === startCity.name || intermediate.name === endCity.name) {
+                        continue;
+                    }
+                    
+                    if (hasDirectConnection(startCity.name, intermediate.name, mode) && 
+                        hasDirectConnection(intermediate.name, endCity.name, mode)) {
+                        return [startCity, intermediate, endCity];
+                    }
+                }
+                
+                // If no connection found, still return direct but it won't be realistic
+                return [startCity, endCity];
+            }
+            
+            // For walking and cycling, add intermediate stops for long distances
+            if (mode === 'walking' || mode === 'cycling') {
+                if (distance <= 5) {
+                    return [startCity, endCity];
+                }
+                
+                if (distance > 50) {
+                    var intermediates = cities.filter(function(c) {
+                        return c.name !== startCity.name && c.name !== endCity.name;
+                    });
+                    
+                    var bestRoute = [startCity, endCity];
+                    var bestDistance = distance;
+                    
+                    for (var i = 0; i < intermediates.length; i++) {
+                        var intermediate = intermediates[i];
+                        var dist1 = calculateDistance(startCity, intermediate);
+                        var dist2 = calculateDistance(intermediate, endCity);
+                        var totalDist = dist1 + dist2;
+                        
+                        if (totalDist < bestDistance * 1.2) {
+                            bestRoute = [startCity, intermediate, endCity];
+                            bestDistance = totalDist;
+                        }
+                    }
+                    
+                    return bestRoute;
+                }
+                
+                return [startCity, endCity];
+            }
+            
+            return [startCity, endCity];
+        }
+
+        function getRouteInstructions(route, mode) {
+            var instructions = [];
+            
+            for (var i = 0; i < route.length; i++) {
+                var city = route[i];
+                var instruction = '';
+                
+                if (i === 0) {
+                    instruction = 'Start your journey';
+                } else if (i === route.length - 1) {
+                    instruction = 'Arrive at destination';
+                } else {
+                    instruction = 'Stop for rest/transfer';
+                }
+                
+                if (mode === 'walking' && i < route.length - 1) {
+                    var dist = calculateDistance(route[i], route[i + 1]);
+                    instruction += ' • Walk ' + dist.toFixed(1) + ' km';
+                } else if (mode === 'cycling' && i < route.length - 1) {
+                    var dist = calculateDistance(route[i], route[i + 1]);
+                    instruction += ' • Cycle ' + dist.toFixed(1) + ' km';
+                } else if (mode === 'publicTransport' && i < route.length - 1) {
+                    instruction += ' • Take train/bus';
+                } else if ((mode === 'ev' || mode === 'carFossil') && i < route.length - 1) {
+                    var dist = calculateDistance(route[i], route[i + 1]);
+                    instruction += ' • Drive ' + dist.toFixed(1) + ' km';
+                }
+                
+                instructions.push({
+                    city: city.name,
+                    region: city.region,
+                    instruction: instruction,
+                    lat: city.lat,
+                    lon: city.lon
+                });
+            }
+            
+            return instructions;
+        }
+
+        function generateMap(route) {
+            if (route.length === 0) return '';
+            
+            // UK geographic bounds (approximate)
+            var ukMinLat = 49.9;
+            var ukMaxLat = 60.9;
+            var ukMinLon = -8.2;
+            var ukMaxLon = 2.0;
+            
+            var latRange = ukMaxLat - ukMinLat;
+            var lonRange = ukMaxLon - ukMinLon;
+            
+            var mapWidth = 800;
+            var mapHeight = 1000;
+            
+            var mapHTML = '<div class="route-map">' +
+                '<div class="map-title">📍 Journey Map</div>' +
+                '<div class="map-container">' +
+                '<div class="map-canvas" style="width: ' + mapWidth + 'px; height: ' + mapHeight + 'px;">';
+            
+            // Draw lines first (so they appear behind markers)
+            for (var i = 0; i < route.length - 1; i++) {
+                var city = route[i];
+                var nextCity = route[i + 1];
+                
+                var x1 = ((city.lon - ukMinLon) / lonRange) * mapWidth;
+                var y1 = ((ukMaxLat - city.lat) / latRange) * mapHeight;
+                var x2 = ((nextCity.lon - ukMinLon) / lonRange) * mapWidth;
+                var y2 = ((ukMaxLat - nextCity.lat) / latRange) * mapHeight;
+                
+                var dx = x2 - x1;
+                var dy = y2 - y1;
+                var length = Math.sqrt(dx * dx + dy * dy);
+                var angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                
+                mapHTML += '<div class="map-line" style="' +
+                    'left: ' + x1 + 'px; ' +
+                    'top: ' + y1 + 'px; ' +
+                    'width: ' + length + 'px; ' +
+                    'transform: rotate(' + angle + 'deg);' +
+                    '"></div>';
+            }
+            
+            // Draw markers and labels
+            for (var i = 0; i < route.length; i++) {
+                var city = route[i];
+                var x = ((city.lon - ukMinLon) / lonRange) * mapWidth;
+                var y = ((ukMaxLat - city.lat) / latRange) * mapHeight;
+                
+                var markerClass = 'map-marker';
+                if (i === 0) markerClass += ' start';
+                else if (i === route.length - 1) markerClass += ' end';
+                
+                var markerSize = (i === 0 || i === route.length - 1) ? 20 : 16;
+                var offset = markerSize / 2;
+                
+                mapHTML += '<div class="' + markerClass + '" style="left: ' + (x - offset) + 'px; top: ' + (y - offset) + 'px;"></div>';
+                mapHTML += '<div class="map-label" style="left: ' + x + 'px; top: ' + (y - 25) + 'px; transform: translateX(-50%);">' + city.name + '</div>';
+            }
+            
+            mapHTML += '</div></div></div>';
+            
+            return mapHTML;
+        }
+
+        function calculateRoutes() {
+            var start = document.getElementById('startCity').value;
+            var end = document.getElementById('endCity').value;
+
+            var startCity = cities.find(function(c) { return c.name === start; });
+            var endCity = cities.find(function(c) { return c.name === end; });
+
+            if (!startCity || !endCity) return;
+
+            var distance = calculateDistance(startCity, endCity);
+            var recommendedModes = getRecommendedModes(distance);
+
+            var modesContainer = document.getElementById('transportModes');
+            modesContainer.innerHTML = recommendedModes.map(function(mode) {
+                var isActive = mode === selectedMode ? 'active' : '';
+                return '<button class="mode-btn ' + isActive + '" onclick="selectMode(\'' + mode + '\')">' + 
+                    transportModes[mode].name + '</button>';
+            }).join('');
+
+            displayRoutes(startCity, endCity, distance, recommendedModes);
+        }
+
+        function selectMode(mode) {
+            selectedMode = mode;
+            
+            if (mode === 'carFossil') {
+                document.body.classList.add('fossil-mode');
+            } else {
+                document.body.classList.remove('fossil-mode');
+            }
+            
+            var buttons = document.querySelectorAll('.mode-btn');
+            buttons.forEach(function(btn) { btn.classList.remove('active'); });
+            event.target.classList.add('active');
+            
+            var start = document.getElementById('startCity').value;
+            var end = document.getElementById('endCity').value;
+            var startCity = cities.find(function(c) { return c.name === start; });
+            var endCity = cities.find(function(c) { return c.name === end; });
+            var distance = calculateDistance(startCity, endCity);
+            var recommendedModes = getRecommendedModes(distance);
+            
+            displayRoutes(startCity, endCity, distance, recommendedModes);
+        }
+
+        function displayRoutes(startCity, endCity, distance, recommendedModes) {
+            var routesDisplay = document.getElementById('routesDisplay');
+            var co2Display = document.getElementById('co2Comparison');
+
+            var routesHTML = '';
+            var co2Values = {};
+
+            var modesToDisplay = [selectedMode];
+
+            modesToDisplay.forEach(function(mode) {
+                var modeData = transportModes[mode];
+                var route = findOptimalRoute(startCity, endCity, mode);
+                var routeInstructions = getRouteInstructions(route, mode);
+                
+                var totalDistance = 0;
+                for (var i = 0; i < route.length - 1; i++) {
+                    totalDistance += calculateDistance(route[i], route[i + 1]);
+                }
+                
+                var co2 = calculateCO2(totalDistance, mode);
+                var time = estimateTime(totalDistance, mode);
+                co2Values[mode] = co2;
+
+                var pathHTML = '<div class="route-path">';
+                routeInstructions.forEach(function(step, idx) {
+                    pathHTML += '<div class="path-step">' +
+                        '<div class="step-icon">' + (idx + 1) + '</div>' +
+                        '<div class="step-details">' +
+                        '<div class="step-city">' + step.city + '</div>' +
+                        '<div class="step-instruction">' + step.instruction + '</div>' +
+                        '</div>' +
+                        '</div>';
+                });
+                pathHTML += '</div>';
+
+                var mapHTML = generateMap(route);
+
+                routesHTML += '<div class="route-card">' +
+                    '<div class="route-header">' +
+                    '<span class="route-mode">' + modeData.name + '</span>' +
+                    '<span class="eco-badge">CO₂: ' + co2.toFixed(2) + ' kg</span>' +
+                    '</div>' +
+                    '<div class="route-details">' +
+                    '📍 Total Distance: ' + totalDistance.toFixed(1) + ' km<br>' +
+                    '⏱️ Estimated Time: ' + time + '<br>' +
+                    '</div>' +
+                    pathHTML +
+                    mapHTML +
+                    '</div>';
+            });
+
+            routesDisplay.innerHTML = routesHTML;
+
+            var selectedCO2 = co2Values[selectedMode];
+            var fossilCO2 = calculateCO2(distance, 'carFossil');
+            var savings = fossilCO2 - selectedCO2;
+            var savingsPercent = ((savings / fossilCO2) * 100).toFixed(1);
+
+            co2Display.innerHTML = '<div class="co2-metric">' +
+                '<div class="co2-label">Your Selection</div>' +
+                '<div class="co2-value">' + selectedCO2.toFixed(2) + '</div>' +
+                '<div class="co2-unit">kg CO₂</div>' +
+                '</div>' +
+                '<div class="co2-metric">' +
+                '<div class="co2-label">vs. Fossil Fuel Car</div>' +
+                '<div class="co2-value">' + fossilCO2.toFixed(2) + '</div>' +
+                '<div class="co2-unit">kg CO₂</div>' +
+                '</div>' +
+                '<div class="co2-metric">' +
+                '<div class="co2-label">CO₂ Savings</div>' +
+                '<div class="co2-value" style="color: #10b981;">' + savings.toFixed(2) + '</div>' +
+                '<div class="co2-unit">kg (' + savingsPercent + '% reduction)</div>' +
+                '</div>';
+        }
+
+        function estimateTime(distance, mode) {
+            var speeds = {
+                publicTransport: 60,
+                cycling: 20,
+                ev: 80,
+                walking: 5,
+                carFossil: 80
+            };
+
+            var hours = distance / speeds[mode];
+            var h = Math.floor(hours);
+            var m = Math.round((hours - h) * 60);
+            return h > 0 ? h + 'h ' + m + 'm' : m + 'm';
+        }
+
+        function init() {
+            var sortedCities = cities.slice().sort(function(a, b) {
+                return a.name.localeCompare(b.name);
+            });
+            
+            var startSelect = document.getElementById('startCity');
+            var endSelect = document.getElementById('endCity');
+            
+            startSelect.innerHTML = sortedCities.map(function(city) {
+                var selected = city.name === 'London' ? 'selected' : '';
+                return '<option value="' + city.name + '" ' + selected + '>' + city.name + '</option>';
+            }).join('');
+            
+            endSelect.innerHTML = sortedCities.map(function(city) {
+                var selected = city.name === 'Edinburgh' ? 'selected' : '';
+                return '<option value="' + city.name + '" ' + selected + '>' + city.name + '</option>';
+            }).join('');
+
+            calculateRoutes();
+        }
+
+        init();
+    </script>
+</body>
+</html>
