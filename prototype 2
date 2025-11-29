@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Team 4 — Sustainable Travel Route Optimiser</title>
+  <style>
+    :root{
+      --green:#0f9d58;
+      --muted:#6b7280;
+      --card:#ffffff;
+      --bg:#f3f4f6;
+      --glass: rgba(255,255,255,0.85);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:#111;}
+    .container{max-width:1100px;margin:0 auto;padding:24px;}
+    /* NAV */
+    nav{display:flex;align-items:center;justify-content:space-between;background:var(--card);padding:16px;border-radius:10px;box-shadow:0 6px 18px rgba(15,23,42,0.06);}
+    nav h1{margin:0;font-size:18px;color:var(--green);font-weight:700;}
+    .nav-links{display:flex;gap:8px;align-items:center;}
+    .btn{background:transparent;border:0;padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer;}
+    .btn:hover{background:#f1f5f9;}
+    .cta{background:var(--green);color:#fff;padding:10px 16px;border-radius:12px;border:0;cursor:pointer;font-weight:700;}
+    /* HERO */
+    .hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:48px 16px;margin:20px 0;border-radius:14px;background:linear-gradient(180deg,rgba(15,157,88,0.06),transparent);box-shadow:0 4px 20px rgba(15,23,42,0.03);}
+    .hero h2{font-size:28px;margin:0 0 12px;color:#065f46;}
+    .hero p{margin:0 0 18px;color:var(--muted);max-width:800px;}
+    /* FEATURES */
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0;}
+    .card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,0.04);text-align:center;}
+    .icon{width:48px;height:48px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:linear-gradient(135deg,#ecfccb,#bbf7d0);font-weight:800;color:#14532d;}
+    /* MAP + ROUTES */
+    .main{display:grid;grid-template-columns:1fr 420px;gap:18px;margin-bottom:28px;}
+    .map{background:linear-gradient(180deg,#dff6e9,#ffffff);border-radius:12px;min-height:380px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:600;border:2px dashed rgba(15,23,42,0.04);}
+    .sidebar{position:relative;}
+    .route-list{display:flex;flex-direction:column;gap:12px;}
+    .route-card{background:var(--card);padding:14px;border-radius:12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 6px 16px rgba(15,23,42,0.04);}
+    .route-top{display:flex;justify-content:space-between;align-items:center;}
+    .meta{color:var(--muted);font-size:13px;}
+    .co2{font-weight:800;color:#065f46;}
+    .select{display:flex;gap:8px;margin-top:6px;}
+    .small{font-size:13px;color:var(--muted);}
+    /* FOOTER CTA */
+    footer{background:var(--green);color:#fff;padding:28px;border-radius:12px;text-align:center;margin-top:18px;}
+    /* responsive */
+    @media (max-width:980px){
+      .grid{grid-template-columns:1fr;}
+      .main{grid-template-columns:1fr;}
+      .container{padding:12px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Navigation -->
+    <nav>
+      <h1>Team 4 — Sustainable Travel Route Optimiser</h1>
+      <div class="nav-links" role="navigation" aria-label="Primary">
+        <button class="btn" onclick="scrollToSection('home')">Home</button>
+        <button class="btn" onclick="scrollToSection('features')">About</button>
+        <button class="btn" onclick="scrollToSection('routes')">Routes</button>
+        <button class="btn" onclick="scrollToSection('contact')">Contact</button>
+        <button class="cta" onclick="launchTool()">Launch Tool</button>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section id="home" class="hero" aria-labelledby="hero-heading">
+      <h2 id="hero-heading">Travel Smarter. Travel Greener.</h2>
+      <p>Discover the most eco-friendly routes by combining walking, cycling, public transport, and electric vehicle options. Compare travel time, cost, and estimated CO₂ emissions to make sustainable choices.</p>
+      <div style="display:flex;gap:10px;">
+        <button class="cta" onclick="launchTool()">Start Optimising</button>
+        <button class="btn" onclick="exampleCompare()">Compare Example Routes</button>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="grid" aria-label="Key features">
+      <div class="card">
+        <div class="icon">🗺️</div>
+        <h3>Multi-Modal Routing</h3>
+        <p class="small">Combine walking, cycling, public transport, and EV legs into one route.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🌱</div>
+        <h3>CO₂ Comparison</h3>
+        <p class="small">Estimated emissions per route so you can pick the greenest option.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🤖</div>
+        <h3>Smart Suggestions</h3>
+        <p class="small">Recommendations balancing time, cost and environmental impact.</p>
+      </div>
+    </section>
+
+    <!-- Map + Routes -->
+    <section id="routes" class="main" aria-labelledby="routes-heading">
+      <div>
+        <div class="map" id="map">
+          <!-- Placeholder map area -->
+          <div>
+            <div style="font-size:20px;margin-bottom:6px;">Map Preview</div>
+            <div style="font-size:13px;color:var(--muted);">(Integrate a map provider like Mapbox / Leaflet here)</div>
+          </div>
+        </div>
+
+        <!-- Quick summary / comparison -->
+        <div style="display:flex;gap:12px;margin-top:14px;">
+          <div class="card" style="flex:1">
+            <h4 style="margin:0 0 8px 0">Selected Route</h4>
+            <div id="selectedSummary" class="small">No route selected — click "View" on a route.</div>
+          </div>
+          <div class="card" style="width:220px;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+            <div style="font-size:12px;color:var(--muted);">Green score</div>
+            <div id="greenScore" style="font-size:28px;color:#065f46;font-weight:800">—</div>
+            <div class="small">Higher is greener</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;">
+          <input id="from" placeholder="From: (e.g. Home)" style="flex:1;padding:10px;border-radius:10px;border:1px solid #e6e9ee;" />
+          <input id="to" placeholder="To: (e.g. Work)" style="flex:1;padding:10px;border-radius:10px;border:1px solid #e6e9ee;" />
+        </div>
+
+        <div class="route-list" id="routeList" aria-live="polite">
+          <!-- Route cards populated by JS -->
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn" onclick="refreshRoutes()">Recalculate</button>
+          <button class="btn" onclick="saveRoute()">Save</button>
+          <button class="cta" onclick="launchTool()">Open Planner</button>
+        </div>
+      </aside>
+    </section>
+
+    <!-- Footer CTA -->
+    <footer id="contact">
+      <h3>Ready to explore greener routes?</h3>
+      <p style="max-width:800px;margin:8px auto 12px;color:rgba(255,255,255,0.9)">Compare CO₂, time, and cost — pick routes that benefit both you and the planet.</p>
+      <button class="cta" onclick="launchTool()">Try the Optimiser</button>
+    </footer>
+  </div>
+
+  <script>
+    // -- Simple model for CO2 per km (grams) and speeds (km/h)
+    const modeData = {
+      walking: { co2_g_per_km: 0, speed_kmh: 5, cost: 0 },
+      cycling: { co2_g_per_km: 0, speed_kmh: 15, cost: 0 },
+      bus: { co2_g_per_km: 68, speed_kmh: 25, cost: 2.5 },
+      tram: { co2_g_per_km: 41, speed_kmh: 30, cost: 2.8 },
+      ev: { co2_g_per_km: 40, speed_kmh: 50, cost: 6 } // EV well-to-wheel placeholder
+    };
+
+    // Example routes (a real tool would compute these)
+    const exampleRoutes = [
+      { id: 'A', title: 'Fastest (EV)', legs: [{mode:'ev', dist_km:12}], note:'Door-to-door EV' },
+      { id: 'B', title: 'Public Transport', legs: [{mode:'walk',dist_km:0.6},{mode:'bus',dist_km:10},{mode:'walk',dist_km:0.4}], note:'Short walks + bus' },
+      { id: 'C', title: 'Active + Tram', legs: [{mode:'cycle',dist_km:4},{mode:'tram',dist_km:8}], note:'Cycle to tram stop' },
+      { id: 'D', title: 'Zero-Carbon (Walk + Cycle)', legs: [{mode:'walk',dist_km:1},{mode:'cycle',dist_km:11}], note:'Mix walking and cycling' }
+    ];
+
+    // Helper arithmetic (digit-by-digit style internally done by JS but careful with displayed numbers)
+    function calcRoute(route){
+      let total_km = 0, total_time_min = 0, total_cost = 0, total_co2_g = 0;
+      route.legs.forEach(leg=>{
+        const m = modeData[leg.mode];
+        const d = Number(leg.dist_km);
+        total_km += d;
+        total_time_min += (d / m.speed_kmh) * 60;
+        total_cost += (m.cost || 0);
+        total_co2_g += (m.co2_g_per_km || 0) * d;
+      });
+      // compute simple green score: lower CO2 per km => higher score; clamp 0-100
+      const co2_per_km = total_co2_g / Math.max(1, total_km);
+      // normalize between 0 (worst ~120 g/km) and 100 (best 0 g/km)
+      const score = Math.round(Math.max(0, Math.min(100, (1 - (co2_per_km / 120)) * 100)));
+      return {
+        id: route.id,
+        title: route.title,
+        note: route.note,
+        total_km: Number(total_km.toFixed(2)),
+        time_min: Math.round(total_time_min),
+        cost: Number(total_cost.toFixed(2)),
+        co2_grams: Math.round(total_co2_g),
+        co2_per_km: Number(co2_per_km.toFixed(1)),
+        greenScore: score,
+      };
+    }
+
+    function renderRoutes(routes){
+      const container = document.getElementById('routeList');
+      container.innerHTML = '';
+      routes.forEach(r=>{
+        const stats = calcRoute(r);
+        const div = document.createElement('div');
+        div.className = 'route-card';
+        div.innerHTML = `
+          <div class="route-top">
+            <div>
+              <div style="font-weight:700">${stats.title} <span style="font-weight:600;color:var(--muted);font-size:12px">#${stats.id}</span></div>
+              <div class="meta">${r.note}</div>
+            </div>
+            <div style="text-align:right">
+              <div class="co2">${stats.co2_grams} g CO₂</div>
+              <div class="small">${stats.co2_per_km} g/km</div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="small">${stats.total_km} km • ${stats.time_min} min</div>
+            <div style="font-weight:700">${stats.cost}£</div>
+          </div>
+          <div class="select">
+            <button class="btn" onclick='viewRoute("${r.id}")'>View</button>
+            <button class="btn" onclick='compareRoute("${r.id}")'>Compare</button>
+            <div style="margin-left:auto;color:var(--muted);font-weight:800">${stats.greenScore} / 100</div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // initial render
+    renderRoutes(exampleRoutes);
+
+    // Interactions
+    function viewRoute(id){
+      const route = exampleRoutes.find(r=>r.id===id);
+      const stats = calcRoute(route);
+      document.getElementById('selectedSummary').textContent =
+        `${route.title}: ${stats.total_km} km • ${stats.time_min} min • ${stats.co2_grams} g CO₂ (${stats.co2_per_km} g/km) • ${stats.cost}£`;
+      document.getElementById('greenScore').textContent = `${stats.greenScore}`;
+      // update map placeholder (in real app you'd draw polyline)
+      const map = document.getElementById('map');
+      map.innerHTML = `<div style="text-align:center"><div style="font-weight:700">${route.title}</div><div style="font-size:13px;color:var(--muted)">${route.note}</div></div>`;
+    }
+
+    function compareRoute(id){
+      // For demo: compare chosen route vs the zero-carbon route (D)
+      const a = exampleRoutes.find(r=>r.id===id);
+      const b = exampleRoutes.find(r=>r.id==='D');
+      const sa = calcRoute(a), sb = calcRoute(b);
+      alert(`${sa.title} vs ${sb.title}\n\n${sa.co2_grams} g CO₂ (${sa.co2_per_km} g/km) • ${sa.time_min} min • ${sa.cost}£\nvs\n${sb.co2_grams} g CO₂ (${sb.co2_per_km} g/km) • ${sb.time_min} min • ${sb.cost}£`);
+    }
+
+    function refreshRoutes(){
+      // Placeholder: in a real system this would re-query routing APIs with user origin/destination
+      const from = document.getElementById('from').value || 'Home';
+      const to = document.getElementById('to').value || 'Work';
+      exampleRoutes.forEach(r=>{
+        r.note = r.note + ' '; // no-op to simulate change
+      });
+      renderRoutes(exampleRoutes);
+      alert(`Routes recalculated for ${from} → ${to}`);
+    }
+
+    function saveRoute(){
+      alert('Route saved to your favourites (demo)');
+    }
+
+    function launchTool(){
+      alert('Launching the Sustainable Travel Route Optimiser (demo). In production this would open the full planner.');
+    }
+
+    function scrollToSection(id){
+      const el = document.getElementById(id);
+      if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+    }
+
+    // Example quick compare button
+    function exampleCompare(){ compareRoute('B'); }
+
+  </script>
+</body>
+</html>
